@@ -1,0 +1,27 @@
+# A paid web-service plan is required for a persistent disk.
+services:
+  - type: web
+    name: playroom-toys
+    runtime: node
+    plan: 0.5c-512mb
+    region: oregon
+    buildCommand: npm ci --include=dev && npm run build:render
+    startCommand: npm run start:render
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    disk:
+      name: playroom-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: 24.22.1
+      - key: NODE_ENV
+        value: production
+      - key: SQLITE_PATH
+        value: /var/data/playroom.sqlite
+      - key: COMMERCE_MODE
+        value: preview
+      # Render automatically provides RENDER_EXTERNAL_URL.
+      # Add STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET in the dashboard
+      # only when you are ready to enable Stripe test/live payments.

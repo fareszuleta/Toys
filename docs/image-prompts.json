@@ -1,0 +1,33 @@
+{
+  "generator": "Built-in Imagegen",
+  "assets": [
+    {
+      "file": "public/images/hero.webp",
+      "prompt": "Use case: product-mockup. Asset type: large editorial hero photo for a premium playful toy store website named Playroom. Create a beautifully composed photorealistic studio still life of unbranded children's toys: one large soft caramel teddy bear, a pale natural wooden rocket with coral red nose and mint fins, a vibrant wooden stacking rainbow, small yellow toy jeep, a handful of colorful geometric wooden building blocks. Arrange them on staggered pale mint rounded display pedestals against a seamless solid very pale mint green studio background (#e4f1e7), broad gentle daylight and believable contact shadows. The toys should occupy the central and right three quarters of the frame with a few spare floating wooden stars overhead. High-end tactile real materials, natural wood grain, fuzzy teddy fur, contemporary product styling, inviting and warm. Landscape 3:2 composition, full view, crisp detail. No people, no hands, no text, no logos, no watermarks, no packaging. This is a product photo, not a webpage mockup."
+    },
+    {
+      "file": "public/images/rainbow.webp",
+      "prompt": "Use case: product-mockup. Asset: square ecommerce catalog product photo. One beautiful large unbranded wooden stacking rainbow toy, six thick nested arches colored coral, golden yellow, sage green, teal, dusty blue, natural pale wood, visible natural wood grain. Slightly offset 3/4 front view, whole rainbow centered with generous margin, sitting on seamless very pale peach studio background #fff2e7. Soft natural daylight with gentle contact shadow. High-end crisp realistic product photography, tactile painted wood. No text, no logos, no people, no extra toys."
+    },
+    {
+      "file": "public/images/bear.webp",
+      "prompt": "Use case: product-mockup. Asset: square ecommerce catalog product photo. A single adorable unbranded soft caramel-brown teddy bear with rounded ears, little black eyes and embroidered nose, wearing a small sage green cotton scarf. Sitting up with both paws visible. Centered whole body with generous margin, seamless very pale warm pink studio background #fcebef, soft natural daylight with gentle contact shadow, realistic fuzzy plush fur. Premium product photography. No text, no logos, no people, no extra toys."
+    },
+    {
+      "file": "public/images/rocket.webp",
+      "prompt": "Use case: product-mockup. Asset: square ecommerce catalog product photo. One unbranded natural wooden toy space rocket, coral-red pointed nose and three teal green fins, round white porthole window, pale wood grain fuselage, tiny little wood astronaut standing beside it. Playful sleek design, 3/4 view, whole toy centered with generous margin. Seamless very pale sky blue studio background #eaf3f9. Soft daylight, gentle contact shadow, premium crisp realistic product photography, tactile painted wood. No text, no logos, no people, no other objects."
+    },
+    {
+      "file": "public/images/jeep.webp",
+      "prompt": "Use case: product-mockup. Asset: square ecommerce catalog product photo. One cute unbranded chunky wooden safari jeep toy painted golden yellow with black rubber wheels and sage green roof rack, plus a tiny friendly wooden giraffe peeking up from the open roof. All wood tactile toy design. 3/4 front side view, entire toy centered with generous margin on seamless very pale butter yellow studio background #fff6dc. Soft daylight, gentle contact shadow, crisp premium photorealistic product photo. No text, no logos, no people, no other objects."
+    },
+    {
+      "file": "public/images/blocks.webp",
+      "prompt": "Use case: product-mockup. Asset: square ecommerce catalog product photo. A beautiful set of colorful wooden building blocks in red coral, sky blue, sage green, mustard yellow and natural pale wood, some arranged into a little architectural city with arches and triangular rooftops, several loose blocks in the foreground. All rounded edges and visible wood texture. Centered whole arrangement with generous margin, seamless pale lavender studio background #f1edf9. Soft daylight and gentle contact shadows, high-end realistic product photography. No text, no logos, no people."
+    },
+    {
+      "file": "public/images/dinos.webp",
+      "prompt": "Use case: product-mockup. Asset: square ecommerce catalog product photo. Three charming chunky unbranded small dinosaur play figures: sage green brontosaurus with long curved neck, coral red triceratops, golden yellow stegosaurus, high quality matte tactile finish with friendly simple faces, posed as a little group in a row. Entire toys visible, centered with generous margin on seamless very pale mint studio background #e9f3eb. Soft natural daylight, gentle contact shadows, crisp premium realistic toy product photography. No text, no logos, no people, no extra objects."
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { readFile, stat } from 'node:fs/promises';
+import { resolve, extname, sep } from 'node:path';
+import { gzipSync } from 'node:zlib';
+import { GET, POST } from '../app/api/store/route';
+import { POST as webhook } from '../app/api/stripe/webhook/route';
+import { authenticateRequest, authRoute } from './auth';
+import { requestIdentity } from './auth-context';
+import { sqlite } from './database';
+
+const port=Number(process.env.PORT||3000);
+const publicDir=resolve('dist/render/client');
+const configuredOrigin=process.env.PUBLIC_SITE_URL||process.env.RENDER_EXTERNAL_URL;
+if(process.env.NODE_ENV==='production'&&!configuredOrigin)throw new Error('Set PUBLIC_SITE_URL to the public HTTPS origin.');
+const origin=configuredOrigin?new URL(configuredOrigin).origin:`http://127.0.0.1:${port}`;
+if(process.env.NODE_ENV==='production'&&!origin.startsWith('https://'))throw new Error('Production PUBLIC_SITE_URL must use HTTPS.');
+const mime:Record<string,string>={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.woff2':'font/woff2','.ttf':'font/ttf','.ico':'image/x-icon'};
+function headers(response:ServerResponse){
+  response.setHeader('X-Content-Type-Options','nosniff');response.setHeader('X-Frame-Options','DENY');response.setHeader('Referrer-Policy','strict-origin-when-cross-origin');response.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=()');
+  response.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://checkout.stripe.com; object-src 'none'");
+  if(process.env.NODE_ENV==='production')response.setHeader('Strict-Transport-Security','max-age=31536000');
+}
+async function send(response:ServerResponse,result:Response){response.statusCode=result.status;result.headers.forEach((v,k)=>response.setHeader(k,v));response.end(Buffer.from(await result.arrayBuffer()));}
+async function makeRequest(incoming:IncomingMessage,url:string){
+  const chunks:Buffer[]=[];let size=0;
+  for await(const chunk of incoming){size+=chunk.length;if(size>1024*1024)throw new Error('BODY_TOO_LARGE');chunks.push(chunk);}
+  const body=Buffer.concat(chunks);
+  const headerMap=new Headers();for(const [key,value] of Object.entries(incoming.headers)){if(value)headerMap.set(key,Array.isArray(value)?value.join(','):value);}
+  return new Request(url,{method:incoming.method,headers:headerMap,body:body.length?body:undefined});
+}
+const server=createServer(async(incoming,response)=>{
+  headers(response);
+  try{
+    const url=new URL(incoming.url||'/',origin);
+    if(url.origin!==origin){response.writeHead(400).end();return;}
+    if(url.pathname==='/healthz'){sqlite.prepare('SELECT 1').get();response.setHeader('Cache-Control','no-store');response.end('ok');return;}
+    if(url.pathname.startsWith('/api/')){
+      const request=await makeRequest(incoming,url.href);
+      if(url.pathname.startsWith('/api/auth/')){
+        // Render's last trusted forwarded hop; arbitrary client prefixes are not trusted.
+        const forwarded=String(incoming.headers['x-forwarded-for']||'').split(',').map(s=>s.trim()).filter(Boolean);
+        const ip=process.env.RENDER?forwarded.at(-1)||incoming.socket.remoteAddress||'unknown':incoming.socket.remoteAddress||'unknown';
+        await send(response,await authRoute(request,ip));return;
+      }
+      if(url.pathname==='/api/stripe/webhook'&&incoming.method==='POST'){await send(response,await webhook(request));return;}
+      if(url.pathname==='/api/store'){
+        const result=await requestIdentity.run(authenticateRequest(request),()=>incoming.method==='GET'?GET():incoming.method==='POST'?POST(request):Promise.resolve(new Response('Method not allowed',{status:405})));
+        await send(response,result);return;
+      }
+      response.writeHead(404).end();return;
+    }
+    if(incoming.method!=='GET'&&incoming.method!=='HEAD'){response.writeHead(405).end();return;}
+    const decoded=decodeURIComponent(url.pathname);
+    const path=resolve(publicDir,'.'+(decoded==='/'?'/index.html':decoded));
+    if(!path.startsWith(publicDir+sep)||decoded.split('/').some(s=>s.startsWith('.'))){response.writeHead(404).end();return;}
+    let fileStat;try{fileStat=await stat(path);}catch{response.writeHead(404).end('Not found');return;}
+    if(!fileStat.isFile()){response.writeHead(404).end();return;}
+    const extension=extname(path);
+    response.setHeader('Content-Type',mime[extension]||'application/octet-stream');
+    response.setHeader('Cache-Control',extension==='.html'?'no-cache':url.pathname.startsWith('/assets/')?'public, max-age=31536000, immutable':'public, max-age=3600');
+    if(incoming.method==='HEAD'){response.end();return;}
+    let body=await readFile(path);
+    if(/\bgzip\b/.test(String(incoming.headers['accept-encoding']||''))&&['.html','.js','.css','.svg'].includes(extension)){body=gzipSync(body);response.setHeader('Content-Encoding','gzip');response.setHeader('Vary','Accept-Encoding');}
+    response.end(body);
+  }catch(error){console.error('Request failed',error instanceof Error?error.message:'unknown');if(!response.headersSent){response.writeHead(error instanceof Error&&error.message==='BODY_TOO_LARGE'?413:500,{'Content-Type':'application/json','Cache-Control':'no-store'});}response.end(JSON.stringify({error:'The store is temporarily unavailable. Please try again.'}));}
+});
+server.requestTimeout=30000;server.headersTimeout=15000;
+server.listen(port,'0.0.0.0',()=>console.log(`Playroom listening on ${origin}; commerce mode: ${process.env.COMMERCE_MODE||'preview'}`));
+process.on('SIGTERM',()=>server.close(()=>{sqlite.close();process.exit(0);}));
+process.on('SIGINT',()=>server.close(()=>{sqlite.close();process.exit(0);}));
