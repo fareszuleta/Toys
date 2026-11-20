@@ -83,7 +83,6 @@ export async function POST(request:Request) {
       if(!cart.length&&!existing)return response({error:"Add a little joy to your cart first."},400);
       // Retry an unfinished checkout using its immutable price snapshot.
       const {totals,items}=existing?{totals:{total:existing.total,shipping:existing.shipping},items:JSON.parse(existing.items_json) as ReturnType<typeof orderSnapshot>["items"]}:orderSnapshot(cart);
-      (items as Array<{sku:string;name:string;price:number;quantity:number;updated_at:number}>).push({sku:"playroom-plus",name:"Playroom Rewards",price:999,quantity:1,updated_at:0});(totals as {total:number}).total+=999;
       if(mode==="preview") {
         await db.batch([
           db.prepare("INSERT OR IGNORE INTO orders (id,user_id,status,mode,items_json,total,shipping,created_at) VALUES (?,?,'demo','preview',?,?,?,?)").bind(id,user.userId,JSON.stringify(items),totals.total,totals.shipping,Date.now()),
