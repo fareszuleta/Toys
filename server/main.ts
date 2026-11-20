@@ -51,10 +51,14 @@ const server=createServer(async(incoming,response)=>{
     }
     if(incoming.method!=='GET'&&incoming.method!=='HEAD'){response.writeHead(405).end();return;}
     const decoded=decodeURIComponent(url.pathname);
-    const path=resolve(publicDir,'.'+(decoded==='/'?'/index.html':decoded));
-    if(!path.startsWith(publicDir+sep)||decoded.split('/').some(s=>s.startsWith('.'))){response.writeHead(404).end();return;}
-    let fileStat;try{fileStat=await stat(path);}catch{response.writeHead(404).end('Not found');return;}
-    if(!fileStat.isFile()){response.writeHead(404).end();return;}
+    if(!decoded.startsWith('/')||decoded.split('/').some(s=>s.startsWith('.'))){response.writeHead(404).end();return;}
+    const candidates=decoded==='/'
+      ?[resolve(publicDir,'index.html')]
+      :[resolve(publicDir,'.'+decoded),resolve(publicDir,'.'+decoded+'.html'),resolve(publicDir,'.'+decoded+'/index.html')];
+    if(candidates.some(p=>!p.startsWith(publicDir+sep))){response.writeHead(404).end();return;}
+    let path='';let fileStat;
+    for(const c of candidates){try{const s=await stat(c);if(s.isFile()){path=c;fileStat=s;break;}}catch{}}
+    if(!fileStat){response.writeHead(404).end('Not found');return;}
     const extension=extname(path);
     response.setHeader('Content-Type',mime[extension]||'application/octet-stream');
     response.setHeader('Cache-Control',extension==='.html'?'no-cache':url.pathname.startsWith('/assets/')?'public, max-age=31536000, immutable':'public, max-age=3600');
