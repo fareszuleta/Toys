@@ -7,5 +7,6 @@ declare namespace Cloudflare {
     COMMERCE_MODE?: "preview" | "test" | "live";
     PUBLIC_SITE_URL?: string;
     AUTH_PROVIDER?: "email" | "chatgpt";
+    HARVEST_TOKEN?: string;
   }
 }

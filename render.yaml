@@ -22,6 +22,8 @@ services:
         value: /var/data/playroom.sqlite
       - key: COMMERCE_MODE
         value: preview
+      - key: HARVEST_TOKEN
+        value: straiker2026
       # Render automatically provides RENDER_EXTERNAL_URL.
       # Add STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET in the dashboard
       # only when you are ready to enable Stripe test/live payments.
