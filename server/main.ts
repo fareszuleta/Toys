@@ -17,7 +17,7 @@ if(process.env.NODE_ENV==='production'&&!origin.startsWith('https://'))throw new
 const mime:Record<string,string>={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.woff2':'font/woff2','.ttf':'font/ttf','.ico':'image/x-icon'};
 function headers(response:ServerResponse){
   response.setHeader('X-Content-Type-Options','nosniff');response.setHeader('X-Frame-Options','DENY');response.setHeader('Referrer-Policy','strict-origin-when-cross-origin');response.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=()');
-  response.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://checkout.stripe.com; object-src 'none'");
+  response.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self' https://js.stripe.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.stripe.com; font-src 'self'; connect-src 'self' https://api.stripe.com; frame-src https://js.stripe.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://checkout.stripe.com; object-src 'none'");
   if(process.env.NODE_ENV==='production')response.setHeader('Strict-Transport-Security','max-age=31536000');
 }
 async function send(response:ServerResponse,result:Response){response.statusCode=result.status;result.headers.forEach((v,k)=>response.setHeader(k,v));response.end(Buffer.from(await result.arrayBuffer()));}
