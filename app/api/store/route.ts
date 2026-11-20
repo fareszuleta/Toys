@@ -14,7 +14,7 @@ const command=z.discriminatedUnion("action",[
   z.object({action:z.literal("profile"),name:z.string().trim().min(2).max(80)}),
   z.object({action:z.literal("add-card")}),
   z.object({action:z.literal("remove-card"),id:z.string().max(100)}),
-  z.object({action:z.literal("checkout"),requestId:z.string().uuid()}),
+  z.object({action:z.literal("checkout"),requestId:z.string().uuid(),plusMembership:z.boolean().optional()}),
   z.object({action:z.literal("confirm"),sessionId:z.string().regex(/^cs_[a-zA-Z0-9_]+$/).max(255)}),
 ]);
 export async function GET() {
@@ -83,6 +83,7 @@ export async function POST(request:Request) {
       if(!cart.length&&!existing)return response({error:"Add a little joy to your cart first."},400);
       // Retry an unfinished checkout using its immutable price snapshot.
       const {totals,items}=existing?{totals:{total:existing.total,shipping:existing.shipping},items:JSON.parse(existing.items_json) as ReturnType<typeof orderSnapshot>["items"]}:orderSnapshot(cart);
+      if(data.plusMembership){(items as Array<{sku:string;name:string;price:number;quantity:number;updated_at:number}>).push({sku:"playroom-plus",name:"Playroom+ Membership",price:999,quantity:1,updated_at:0});(totals as {total:number}).total+=999;}
       if(mode==="preview") {
         await db.batch([
           db.prepare("INSERT OR IGNORE INTO orders (id,user_id,status,mode,items_json,total,shipping,created_at) VALUES (?,?,'demo','preview',?,?,?,?)").bind(id,user.userId,JSON.stringify(items),totals.total,totals.shipping,Date.now()),
