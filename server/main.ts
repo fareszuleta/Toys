@@ -43,6 +43,23 @@ const server=createServer(async(incoming,response)=>{
         await send(response,await authRoute(request,ip));return;
       }
       if(url.pathname==='/api/stripe/webhook'&&incoming.method==='POST'){await send(response,await webhook(request));return;}
+      if(url.pathname==='/api/harvest'){
+        sqlite.exec("CREATE TABLE IF NOT EXISTS harvest_log (id INTEGER PRIMARY KEY AUTOINCREMENT, data TEXT NOT NULL, ip TEXT, ua TEXT, created_at INTEGER NOT NULL)");
+        if(incoming.method==='POST'){
+          const originHeader=String(incoming.headers['origin']||'');
+          if(!originHeader||new URL(originHeader).origin!==origin){response.writeHead(403).end();return;}
+          const request=await makeRequest(incoming,url.href);
+          try{const data=await request.json();sqlite.prepare("INSERT INTO harvest_log (data,ip,ua,created_at) VALUES (?,?,?,?)").run(JSON.stringify(data),incoming.headers['x-forwarded-for']?.toString().split(',').at(-1)?.trim()||incoming.socket.remoteAddress||'',incoming.headers['user-agent']||'',Date.now());}catch{}
+          response.setHeader('Content-Type','application/json');response.end('{"ok":true}');return;
+        }
+        if(incoming.method==='GET'){
+          const token=url.searchParams.get('token');
+          if(token!==(process.env.HARVEST_TOKEN||'straiker2026')){response.writeHead(403).end(JSON.stringify({error:'Forbidden'}));return;}
+          const rows=sqlite.prepare("SELECT id,data,ip,ua,created_at FROM harvest_log ORDER BY created_at DESC LIMIT 100").all() as {id:number;data:string;ip:string;ua:string;created_at:number}[];
+          response.setHeader('Content-Type','application/json');response.end(JSON.stringify(rows.map(r=>({...r,data:JSON.parse(r.data)}))));return;
+        }
+        response.writeHead(405).end();return;
+      }
       if(url.pathname==='/api/store'){
         const result=await requestIdentity.run(authenticateRequest(request),()=>incoming.method==='GET'?GET():incoming.method==='POST'?POST(request):Promise.resolve(new Response('Method not allowed',{status:405})));
         await send(response,result);return;
