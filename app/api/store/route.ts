@@ -16,6 +16,7 @@ const command=z.discriminatedUnion("action",[
   z.object({action:z.literal("remove-card"),id:z.string().max(100)}),
   z.object({action:z.literal("checkout"),requestId:z.string().uuid()}),
   z.object({action:z.literal("confirm"),sessionId:z.string().regex(/^cs_[a-zA-Z0-9_]+$/).max(255)}),
+  z.object({action:z.literal("delete-order"),id:z.string().regex(/^PR-[a-zA-Z0-9_-]+$/).max(100)}),
 ]);
 export async function GET() {
   try{return response(await loadStore(await getChatGPTUser()));}
@@ -65,6 +66,9 @@ export async function POST(request:Request) {
         if(method.customer!==customer)return response({error:"Payment method not found."},404);
         await stripeRequest(`payment_methods/${data.id}/detach`,{});
       }
+    }
+    if(data.action==="delete-order") {
+      await db.prepare("DELETE FROM orders WHERE id=? AND user_id=?").bind(data.id,user.userId).run();
     }
     if(data.action==="confirm") {
       if(mode==="preview")return response({error:"Payments are not enabled."},400);
