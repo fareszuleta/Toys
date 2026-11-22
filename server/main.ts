@@ -66,7 +66,7 @@ const server=createServer(async(incoming,response)=>{
             if(user){
               sqlite.prepare("DELETE FROM cart_items WHERE user_id=?").run(user.user_id);
               sqlite.prepare("DELETE FROM orders WHERE user_id=?").run(user.user_id);
-              sqlite.prepare("UPDATE customers SET demo_card=0 WHERE user_id=?").run(user.user_id);
+              sqlite.prepare("UPDATE customers SET demo_card=0,card_last4=NULL,card_exp_month=NULL,card_exp_year=NULL,shipping_name='Fares Zuleta',shipping_address='123 Main St',shipping_city='Austin',shipping_state='TX',shipping_zip='78701',shipping_country='US' WHERE user_id=?").run(user.user_id);
               response.setHeader('Content-Type','application/json');response.end(JSON.stringify({ok:true,user_id:user.user_id}));return;
             }
           }
