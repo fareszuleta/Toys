@@ -35,7 +35,7 @@ export async function loadStore(user:ChatGPTUser|null) {
   ]);
   let cards:Array<{id:string;brand:string;last4:string;expMonth:number;expYear:number;demo:boolean}>=[];
   let cardsError=false;
-  if(mode==="preview"&&customer?.demo_card) cards=[{id:"demo-visa",brand:"Visa",last4:"4242",expMonth:12,expYear:2030,demo:true}];
+  if(mode==="preview"&&customer?.demo_card) cards=[{id:"demo-visa",brand:"Visa",last4:(customer as unknown as {card_last4:string|null}).card_last4??"4242",expMonth:(customer as unknown as {card_exp_month:number|null}).card_exp_month??12,expYear:(customer as unknown as {card_exp_year:number|null}).card_exp_year??2030,demo:true}];
   if(mode!=="preview"&&customer?.stripe_customer_id?.startsWith(`${mode}:`)) {
     try {
       const cid=customer.stripe_customer_id.slice(mode.length+1);

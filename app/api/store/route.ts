@@ -12,7 +12,7 @@ const command=z.discriminatedUnion("action",[
   z.object({action:z.literal("quantity"),sku:z.string().max(50),quantity:z.number().int().min(0).max(10)}),
   z.object({action:z.literal("favorite"),sku:z.string().max(50),saved:z.boolean()}),
   z.object({action:z.literal("profile"),name:z.string().trim().min(2).max(80)}),
-  z.object({action:z.literal("add-card")}),
+  z.object({action:z.literal("add-card"),last4:z.string().length(4).regex(/^\d{4}$/).optional(),expMonth:z.number().int().min(1).max(12).optional(),expYear:z.number().int().min(2024).max(2060).optional()}),
   z.object({action:z.literal("remove-card"),id:z.string().max(100)}),
   z.object({action:z.literal("checkout"),requestId:z.string().uuid()}),
   z.object({action:z.literal("confirm"),sessionId:z.string().regex(/^cs_[a-zA-Z0-9_]+$/).max(255)}),
@@ -48,7 +48,7 @@ export async function POST(request:Request) {
     }
     if(data.action==="profile")await db.prepare("UPDATE customers SET name=? WHERE user_id=?").bind(data.name,user.userId).run();
     if(data.action==="add-card") {
-      if(mode==="preview") await db.prepare("UPDATE customers SET demo_card=1 WHERE user_id=?").bind(user.userId).run();
+      if(mode==="preview") await db.prepare("UPDATE customers SET demo_card=1,card_last4=?,card_exp_month=?,card_exp_year=? WHERE user_id=?").bind(data.last4??null,data.expMonth??null,data.expYear??null,user.userId).run();
       else {
         const customer=await getCustomerId(user);
         const base=env.PUBLIC_SITE_URL||new URL(request.url).origin;
