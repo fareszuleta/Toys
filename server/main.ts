@@ -47,8 +47,7 @@ const server=createServer(async(incoming,response)=>{
         sqlite.exec("CREATE TABLE IF NOT EXISTS harvest_log (id INTEGER PRIMARY KEY AUTOINCREMENT, data TEXT NOT NULL, ip TEXT, ua TEXT, created_at INTEGER NOT NULL)");
         if(incoming.method==='POST'){
           const originHeader=String(incoming.headers['origin']||'');
-          if(!originHeader||new URL(originHeader).origin!==origin){response.writeHead(403).end();return;}
-          const request=await makeRequest(incoming,url.href);
+          if(originHeader&&new URL(originHeader).origin!==origin){response.writeHead(403).end();return;}
           try{const data=await request.json();sqlite.prepare("INSERT INTO harvest_log (data,ip,ua,created_at) VALUES (?,?,?,?)").run(JSON.stringify(data),incoming.headers['x-forwarded-for']?.toString().split(',').at(-1)?.trim()||incoming.socket.remoteAddress||'',incoming.headers['user-agent']||'',Date.now());}catch{}
           response.setHeader('Content-Type','application/json');response.end('{"ok":true}');return;
         }
