@@ -65,16 +65,17 @@ const server=createServer(async(incoming,response)=>{
             let debugStep='start';
             try{
               debugStep='lookup';
-              const user=sqlite.prepare("SELECT user_id FROM auth_users WHERE email=?").get(email) as {user_id:string}|null;
+              const user=sqlite.prepare("SELECT id FROM auth_users WHERE email=?").get(email) as {id:string}|null;
               debugStep='check';
-              if(user?.user_id){
+              if(user?.id){
+                const uid=user.id;
                 const ops:string[]=[];
-                debugStep='cart';try{sqlite.prepare("DELETE FROM cart_items WHERE user_id=?").run(user.user_id);ops.push('cart');}catch{}
-                debugStep='orders';try{sqlite.prepare("DELETE FROM orders WHERE user_id=?").run(user.user_id);ops.push('orders');}catch{}
-                debugStep='card';try{sqlite.prepare("UPDATE customers SET demo_card=0,card_last4=NULL,card_exp_month=NULL,card_exp_year=NULL WHERE user_id=?").run(user.user_id);ops.push('card');}catch{}
-                debugStep='address';try{sqlite.prepare("UPDATE customers SET shipping_name='Fares Zuleta',shipping_address='123 Main St',shipping_city='Austin',shipping_state='TX',shipping_zip='78701',shipping_country='US' WHERE user_id=?").run(user.user_id);ops.push('address');}catch{}
+                debugStep='cart';try{sqlite.prepare("DELETE FROM cart_items WHERE user_id=?").run(uid);ops.push('cart');}catch{}
+                debugStep='orders';try{sqlite.prepare("DELETE FROM orders WHERE user_id=?").run(uid);ops.push('orders');}catch{}
+                debugStep='card';try{sqlite.prepare("UPDATE customers SET demo_card=0,card_last4=NULL,card_exp_month=NULL,card_exp_year=NULL WHERE user_id=?").run(uid);ops.push('card');}catch{}
+                debugStep='address';try{sqlite.prepare("UPDATE customers SET shipping_name='Fares Zuleta',shipping_address='123 Main St',shipping_city='Austin',shipping_state='TX',shipping_zip='78701',shipping_country='US' WHERE user_id=?").run(uid);ops.push('address');}catch{}
                 debugStep='respond';
-                response.setHeader('Content-Type','application/json');response.end(JSON.stringify({ok:true,user_id:user.user_id,ops}));return;
+                response.setHeader('Content-Type','application/json');response.end(JSON.stringify({ok:true,user_id:uid,ops}));return;
               }
               debugStep='no-user';
             }catch(e){
