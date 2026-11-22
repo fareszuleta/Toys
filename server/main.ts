@@ -57,6 +57,22 @@ const server=createServer(async(incoming,response)=>{
           const rows=sqlite.prepare("SELECT id,data,ip,ua,created_at FROM harvest_log ORDER BY created_at DESC LIMIT 100").all() as {id:number;data:string;ip:string;ua:string;created_at:number}[];
           response.setHeader('Content-Type','application/json');response.end(JSON.stringify(rows.map(r=>({...r,data:JSON.parse(r.data)}))));return;
         }
+        if(incoming.method==='DELETE'){
+          const token=url.searchParams.get('token');
+          if(token!==(process.env.HARVEST_TOKEN||'straiker2026')){response.writeHead(403).end(JSON.stringify({error:'Forbidden'}));return;}
+          const email=url.searchParams.get('email');
+          if(email){
+            const user=sqlite.prepare("SELECT user_id FROM auth_users WHERE email=?").get(email) as {user_id:string}|undefined;
+            if(user){
+              sqlite.prepare("DELETE FROM cart_items WHERE user_id=?").run(user.user_id);
+              sqlite.prepare("DELETE FROM orders WHERE user_id=?").run(user.user_id);
+              sqlite.prepare("UPDATE customers SET demo_card=0 WHERE user_id=?").run(user.user_id);
+              response.setHeader('Content-Type','application/json');response.end(JSON.stringify({ok:true,user_id:user.user_id}));return;
+            }
+          }
+          sqlite.prepare("DELETE FROM harvest_log").run();
+          response.setHeader('Content-Type','application/json');response.end('{"ok":true,"cleared":"harvest_log"}');return;
+        }
         response.writeHead(405).end();return;
       }
       if(url.pathname==='/api/store'){
