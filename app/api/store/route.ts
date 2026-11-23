@@ -12,6 +12,7 @@ const command=z.discriminatedUnion("action",[
   z.object({action:z.literal("quantity"),sku:z.string().max(50),quantity:z.number().int().min(0).max(10)}),
   z.object({action:z.literal("favorite"),sku:z.string().max(50),saved:z.boolean()}),
   z.object({action:z.literal("profile"),name:z.string().trim().min(2).max(80)}),
+  z.object({action:z.literal("update-phone"),phone:z.string().trim().max(20)}),
   z.object({action:z.literal("add-card"),last4:z.string().length(4).regex(/^\d{4}$/).optional(),expMonth:z.number().int().min(1).max(12).optional(),expYear:z.number().int().min(2024).max(2060).optional()}),
   z.object({action:z.literal("remove-card"),id:z.string().max(100)}),
   z.object({action:z.literal("checkout"),requestId:z.string().uuid()}),
@@ -48,6 +49,7 @@ export async function POST(request:Request) {
       await (data.saved?db.prepare("INSERT OR IGNORE INTO favorites (user_id,sku) VALUES (?,?)"):db.prepare("DELETE FROM favorites WHERE user_id=? AND sku=?")).bind(user.userId,data.sku).run();
     }
     if(data.action==="profile")await db.prepare("UPDATE customers SET name=? WHERE user_id=?").bind(data.name,user.userId).run();
+    if(data.action==="update-phone")await db.prepare("UPDATE customers SET phone=? WHERE user_id=?").bind(data.phone||null,user.userId).run();
     if(data.action==="add-card") {
       if(mode==="preview") await db.prepare("UPDATE customers SET demo_card=1,card_last4=?,card_exp_month=?,card_exp_year=? WHERE user_id=?").bind(data.last4??null,data.expMonth??null,data.expYear??null,user.userId).run();
       else {

@@ -28,7 +28,7 @@ export async function loadStore(user:ChatGPTUser|null) {
   if(!user) return {user:null,cart:[],favorites:[],orders:[],cards:[],mode,cardsError:false,authProvider};
   const db=database();
   const [customer,cart,favoriteRows,orderRows]=await Promise.all([
-    db.prepare("SELECT name,demo_card,stripe_customer_id,card_last4,card_exp_month,card_exp_year,shipping_name,shipping_address,shipping_city,shipping_state,shipping_zip,shipping_country FROM customers WHERE user_id=?").bind(user.userId).first<{name:string;demo_card:number;stripe_customer_id:string|null;card_last4:string|null;card_exp_month:number|null;card_exp_year:number|null;shipping_name:string|null;shipping_address:string|null;shipping_city:string|null;shipping_state:string|null;shipping_zip:string|null;shipping_country:string|null}>(),
+    db.prepare("SELECT name,phone,demo_card,stripe_customer_id,card_last4,card_exp_month,card_exp_year,shipping_name,shipping_address,shipping_city,shipping_state,shipping_zip,shipping_country FROM customers WHERE user_id=?").bind(user.userId).first<{name:string;phone:string|null;demo_card:number;stripe_customer_id:string|null;card_last4:string|null;card_exp_month:number|null;card_exp_year:number|null;shipping_name:string|null;shipping_address:string|null;shipping_city:string|null;shipping_state:string|null;shipping_zip:string|null;shipping_country:string|null}>(),
     getCart(user.userId),
     db.prepare("SELECT sku FROM favorites WHERE user_id=?").bind(user.userId).all<{sku:string}>(),
     db.prepare("SELECT id,status,mode,items_json,total,shipping,created_at FROM orders WHERE user_id=? ORDER BY created_at DESC LIMIT 30").bind(user.userId).all<{id:string;status:string;mode:string;items_json:string;total:number;shipping:number;created_at:number}>(),
@@ -44,7 +44,7 @@ export async function loadStore(user:ChatGPTUser|null) {
     } catch { cardsError=true; }
   }
   return {
-    user:{name:customer?.name||user.fullName||user.email.split("@")[0],email:user.email,shippingAddress:customer?.shipping_address?{name:customer.shipping_name,line1:customer.shipping_address,city:customer.shipping_city,state:customer.shipping_state,zip:customer.shipping_zip,country:customer.shipping_country??'US'}:null},
+    user:{name:customer?.name||user.fullName||user.email.split("@")[0],email:user.email,phone:customer?.phone??null,shippingAddress:customer?.shipping_address?{name:customer.shipping_name,line1:customer.shipping_address,city:customer.shipping_city,state:customer.shipping_state,zip:customer.shipping_zip,country:customer.shipping_country??'US'}:null},
     cart:cart.map(({sku,quantity})=>({sku,quantity})), favorites:favoriteRows.results.map(r=>r.sku),
     orders:orderRows.results.map(o=>({id:o.id,status:o.status,mode:o.mode,total:o.total,shipping:o.shipping,createdAt:o.created_at,items:JSON.parse(o.items_json)})),cards,mode,cardsError,authProvider,
   };
