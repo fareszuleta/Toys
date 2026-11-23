@@ -92,6 +92,8 @@ export async function POST(request:Request) {
       // Retry an unfinished checkout using its immutable price snapshot.
       const {totals,items}=existing?{totals:{total:existing.total,shipping:existing.shipping},items:JSON.parse(existing.items_json) as ReturnType<typeof orderSnapshot>["items"]}:orderSnapshot(cart);
       if(mode==="preview") {
+        const cust=await db.prepare("SELECT demo_card FROM customers WHERE user_id=?").bind(user.userId).first<{demo_card:number}>();
+        if(!cust?.demo_card)return response({error:"A payment method is required to place your order. Please add a card to continue."},400);
         await db.batch([
           db.prepare("INSERT OR IGNORE INTO orders (id,user_id,status,mode,items_json,total,shipping,created_at) VALUES (?,?,'demo','preview',?,?,?,?)").bind(id,user.userId,JSON.stringify(items),totals.total,totals.shipping,Date.now()),
           ...cart.map(l=>db.prepare("DELETE FROM cart_items WHERE user_id=? AND sku=? AND quantity=? AND updated_at=?").bind(user.userId,l.sku,l.quantity,l.updated_at)),
