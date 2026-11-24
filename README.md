@@ -2,22 +2,20 @@
 
 An online toy store for children from birth to 10 years, operated by Playroom Toys, LLC (Portland, OR). Ships to the United States, Canada, Mexico, and most of Latin America. Prices in USD.
 
+**Live store:** [https://shop.reimbursor.info](https://shop.reimbursor.info)
+
 Features: product catalog with age-based filtering, accounts, saved carts, favorites, three discounted bundles, Stripe payment processing, saved payment methods, and order history.
 
-## Deploy on Render
+## Deploy
 
-[Deploy with a Render Blueprint](https://dashboard.render.com/select-repo?type=blueprint)
+The production instance runs on a managed Node.js server with HTTPS and a persistent SQLite database. The `render.yaml` and `vite.render.config.ts` files configure the build pipeline.
 
-1. Connect this GitHub repository (`fareszuleta/Toys`) to Render.
-2. Choose **New → Blueprint**, select the repository and `main`, then review `render.yaml`.
-3. Render runs `npm ci --include=dev && npm run build:render`, then `npm run start:render`.
-4. Open the service URL and create an account with an email address and a password of at least 12 characters.
+1. Run `npm ci --include=dev && npm run build:render` to build the client and server.
+2. Start with `npm run start:render` or `node dist/render/server.mjs`.
+3. Set `PUBLIC_SITE_URL=https://shop.reimbursor.info` for the production origin.
+4. Open the site and create an account with an email address and a password of at least 12 characters.
 
-The blueprint uses Node.js 24.22.1, a single paid web-service instance, and a 1 GB persistent disk at `/var/data`. SQLite stores accounts, hashed sessions, carts, favorites, and orders on that disk. A paid instance is necessary because Render does not attach persistent disks to free services. No Render resource is provisioned merely by including this configuration.
-
-`RENDER_EXTERNAL_URL` supplies the service origin automatically. For a custom domain, set `PUBLIC_SITE_URL=https://your-domain.example` before using it. Serve production over HTTPS. Database migrations run during startup, when Render's persistent disk is mounted. Do not run them as a build or pre-deploy command.
-
-References: [Render Blueprints](https://render.com/docs/blueprint-spec), [persistent disks](https://render.com/docs/disks), [Node versions](https://render.com/docs/node-version).
+SQLite stores accounts, hashed sessions, carts, favorites, and orders on a persistent disk. Database migrations run during startup. Do not run them as a build or pre-deploy command.
 
 ## Run locally
 
@@ -44,10 +42,10 @@ COMMERCE_MODE=test
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 # Optional when using the default Render URL:
-PUBLIC_SITE_URL=https://your-service.onrender.com
+PUBLIC_SITE_URL=https://shop.reimbursor.info
 ```
 
-Configure a Stripe webhook at `https://your-service.onrender.com/api/stripe/webhook`, listening to `checkout.session.completed` and `checkout.session.async_payment_succeeded`.
+Configure a Stripe webhook at `https://shop.reimbursor.info/api/stripe/webhook`, listening to `checkout.session.completed` and `checkout.session.async_payment_succeeded`.
 
 Payment checkout and card setup both redirect to Stripe-hosted pages. A Stripe Customer is attached to the signed-in account; returning customers can select eligible saved cards at checkout. Checkout offers explicit consent to save a card. The account panel lists the card brand, expiration, and last four digits and lets the owner detach a saved card.
 
